@@ -32,6 +32,7 @@ class phpmyadmin (
   $enabled               = true,
   $manage_apache         = true,
   $manage_config         = true,
+  $use_alias             = true,
   $ip_access_ranges      = ["${::network_eth0}/${::netmask_eth0}"],
   $preseed_package       = $::phpmyadmin::params::preseed_package,
   $package_name          = $::phpmyadmin::params::package_name,
