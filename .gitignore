@@ -1,18 +1,35 @@
-pkg/
-
-# Generated directory for coverage results
-coverage/
-
-# Gem & bundler related files we do not want persisted to the repository
-Gemfile.lock
-.bundle
-vendor/
-
-# Used by rake spec, for temp modules and other test requirements
-spec/fixtures/
-log/
-junit/
-
-# RVM files that are specific to developers implementation
-.ruby-version
-.ruby-gemset
+.git/
+.*.sw[op]
+.metadata
+.yardoc
+.yardwarns
+*.iml
+/.bundle/
+/.idea/
+/.vagrant/
+/coverage/
+/bin/
+/doc/
+/Gemfile.local
+/Gemfile.lock
+/junit/
+/log/
+/pkg/
+/spec/fixtures/manifests/
+/spec/fixtures/modules/*
+/tmp/
+/vendor/
+/.vendor/
+/convert_report.txt
+/update_report.txt
+.DS_Store
+.project
+.envrc
+/inventory.yaml
+/spec/fixtures/litmus_inventory.yaml
+.resource_types
+.modules
+.task_cache.json
+.plan_cache.json
+.rerun.json
+bolt-debug.log
