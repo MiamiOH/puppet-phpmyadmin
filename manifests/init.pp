@@ -12,6 +12,18 @@
 #   True to what it sounds like, this sets the ip ranges which are allowed to access phpmyadmin.
 #   These IP ranges can be either a single range or an array. Should be in dotted quad or ipv6
 #   notation (ex: 192.168.1.0/255.255.255.0, 192.168.1.10, 2012:db8:1234:ffff:ffff:ffff:ffff:ffff, etc.)
+# [*manage_config*]
+#   Whether to manage phpMyAdmin's Apache configuration.
+# [*use_alias*]
+#   Whether to create the standard phpMyAdmin Apache aliases.
+# [*preseed_package*]
+#   Whether to preconfigure package installation using debconf.
+# [*package_name*]
+#   The phpMyAdmin package name.
+# [*apache_default_config*]
+#   Path to the Apache configuration file managed by this module.
+# [*apache_name*]
+#   Name of the Apache service resource.
 #
 # === Examples
 #
@@ -29,34 +41,24 @@
 # Copyright 2013 Justice London, unless otherwise noted.
 #
 class phpmyadmin (
-  $enabled               = true,
-  $manage_apache         = true,
-  $manage_config         = true,
-  $ip_access_ranges      = ["${::ipaddress}/${::netmask}"],
-  $use_alias             = true,
-  $preseed_package       = $::phpmyadmin::params::preseed_package,
-  $package_name          = $::phpmyadmin::params::package_name,
-  $apache_default_config = $::phpmyadmin::params::apache_default_config,
-  $apache_name           = $::phpmyadmin::params::apache_name,
-) inherits ::phpmyadmin::params {
-
-  #Variable validations
-  validate_bool($enabled)
-  validate_bool($manage_apache)
-  validate_array($ip_access_ranges)
-  validate_bool($preseed_package)
-  validate_string($package_name)
-  validate_string($apache_default_config)
-  validate_string($apache_name)
-
+  Boolean $enabled               = true,
+  Boolean $manage_apache         = true,
+  Boolean $manage_config         = true,
+  Array[String] $ip_access_ranges = ["${facts['networking']['ip']}/${facts['networking']['netmask']}"],
+  Boolean $use_alias             = true,
+  Boolean $preseed_package       = $phpmyadmin::params::preseed_package,
+  String $package_name           = $phpmyadmin::params::package_name,
+  String $apache_default_config = $phpmyadmin::params::apache_default_config,
+  String $apache_name           = $phpmyadmin::params::apache_name,
+) inherits phpmyadmin::params {
   #Hacky, but if we want to not break with an already included apache... override mpm
   #If someone knows how to actually get out-of-scope variables to properly inherit
   #let me know.
-  if $manage_apache == true and !defined(Class['::apache']) {
-    class { '::apache':
+  if $manage_apache == true and !defined(Class['apache']) {
+    class { 'apache':
       mpm_module => 'prefork',
     }
-    include ::apache::mod::php
+    include apache::mod::php
   }
 
   if $manage_config == true {
@@ -70,7 +72,7 @@ class phpmyadmin (
 
   #Default/basic apache config file for phpMyAdmin
   file { $apache_default_config:
-    ensure  => present,
+    ensure  => file,
     content => template('phpmyadmin/phpMyAdmin.conf.erb'),
     require => Package[$package_name],
     notify  => Service[$apache_name],
@@ -87,5 +89,4 @@ class phpmyadmin (
 
   #Install or remove package based on enable status
   ensure_packages([$package_name], { ensure => $state_select })
-
 }

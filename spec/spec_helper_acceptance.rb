@@ -24,9 +24,11 @@ RSpec.configure do |c|
 
     hosts.each do |host|
       puts 'Copy hiera.yaml for Beaker'
-      copy_hiera_files_to(host,
-                          hiera_yaml: module_root + '/spec/hiera/hiera.yaml.beaker',
-                          target: '/etc/puppetlabs/code/modules/' + module_name + '/')
+      copy_hiera_files_to(
+        host,
+        hiera_yaml: module_root + '/spec/hiera/hiera.yaml.beaker',
+        target: '/etc/puppetlabs/code/modules/' + module_name + '/',
+      )
 
       puts 'Install fixtures'
       modules.each do |mod_name, mod_info|
@@ -34,9 +36,12 @@ RSpec.configure do |c|
         ref = mod_info['ref']
         dir = '/etc/puppetlabs/code/environments/production/modules/' + mod_name
 
-        puts format(' - Fetch %s with %s from %s', mod_name, ref, url)
-        git_clone = format('git clone %s %s', url, dir)
-        git_checkout = format('cd %s && git checkout %s', dir, ref)
+        puts ' - Fetch %{mod_name} with %{ref} from %{url}' % { mod_name: mod_name,
+          ref: ref,
+          url: url }
+
+        git_clone = 'git clone %{url} %{dir}' % { url: url, dir: dir }
+        git_checkout = 'cd %{dir} && git checkout %{ref}' % { dir: dir, ref: ref }
 
         on host, git_clone
         on host, git_checkout

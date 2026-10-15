@@ -7,7 +7,7 @@ describe 'phpmyadmin::vhost', type: :define do
       let(:facts) do
         facts.merge(
           network_eth0: '127.0.0.1',
-          netmask_eth0: '127.0.0.1'
+          netmask_eth0: '127.0.0.1',
         )
       end
 
@@ -30,7 +30,7 @@ describe 'phpmyadmin::vhost', type: :define do
         it do
           is_expected.to contain_apache__vhost('foovhost').with(
                            'ensure'  => 'present',
-                           'docroot' => '/foobar'
+                           'docroot' => '/foobar',
                          )
         end
       end

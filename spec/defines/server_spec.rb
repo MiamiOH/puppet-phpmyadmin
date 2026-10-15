@@ -10,7 +10,7 @@ describe 'phpmyadmin::server', type: :define do
 
       let :pre_condition do
         [
-          'package { "foobar": }'
+          'package { "foobar": }',
         ]
       end
 

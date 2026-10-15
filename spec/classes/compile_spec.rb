@@ -7,7 +7,7 @@ describe 'phpmyadmin' do
       let(:facts) do
         facts.merge(
           network_eth0: '127.0.0.1',
-          netmask_eth0: '127.0.0.1'
+          netmask_eth0: '127.0.0.1',
         )
       end
 

@@ -33,6 +33,12 @@
 #   The filepath to use as the SSL key
 # [*ssl_ca_file*]
 #   The filepath to use as the SSL CA (default: undef)
+# [*ensure*]
+#   Whether the virtual host and associated resources should be present or absent.
+# [*conf_dir*]
+#   Directory used for SSL certificate and key files.
+# [*conf_dir_enable*]
+#   Apache directory used for enabled site configurations.
 #
 # === Examples
 #
@@ -49,37 +55,24 @@
 # Copyright 2013 Justice London, unless otherwise noted.
 #
 define phpmyadmin::vhost (
-  $ensure          = present,
-  $vhost_enabled   = true,
-  $priority        = '20',
-  $docroot         = $::phpmyadmin::params::doc_path,
-  $aliases         = '',
-  $vhost_name      = $name,
-  $ssl             = false,
-  $ssl_redirect    = false,
-  $ssl_cert        = '',
-  $ssl_key         = '',
-  $ssl_ca          = undef,
-  $ssl_cert_file   = '',
-  $ssl_key_file    = '',
-  $ssl_ca_file     = undef,
-  $conf_dir        = $::apache::params::conf_dir,
-  $conf_dir_enable = $::phpmyadmin::params::site_enable_dir,
+  Enum['present', 'absent'] $ensure = present,
+  Boolean $vhost_enabled = true,   #vhost_enabled parameter is validated but never actually used to enable or disable the vhost. Needs fixed
+  String $priority = '20',
+  Stdlib::Absolutepath $docroot = $phpmyadmin::params::doc_path,
+  Variant[String, Array[String]] $aliases = '',
+  String $vhost_name = $name,
+  Boolean $ssl = false,
+  Boolean $ssl_redirect = false,
+  String $ssl_cert = '',
+  String $ssl_key = '',
+  Optional[String] $ssl_ca = undef,
+  String $ssl_cert_file = '',
+  String $ssl_key_file = '',
+  Optional[String] $ssl_ca_file = undef,
+  Stdlib::Absolutepath $conf_dir = $apache::params::conf_dir,
+  Stdlib::Absolutepath $conf_dir_enable = $phpmyadmin::params::site_enable_dir,
 ) {
-  include ::phpmyadmin
-
-  #Variable validations
-  validate_re($ensure, '^present$|^absent$')
-  validate_bool($vhost_enabled)
-  validate_string($priority)
-  validate_absolute_path($docroot)
-  validate_string($vhost_name)
-  validate_bool($ssl)
-  validate_bool($ssl_redirect)
-  validate_string($ssl_cert)
-  validate_string($ssl_key)
-  validate_absolute_path($conf_dir)
-  validate_absolute_path($conf_dir_enable)
+  include phpmyadmin
 
   #If SSL is enabled, use 443 port by default
   case $ssl {
@@ -134,9 +127,9 @@ define phpmyadmin::vhost (
           servername    => $vhost_name,
           serveraliases => $aliases,
           rewrites      => [{
-            comment      => 'Redirect to HTTPS',
-            rewrite_cond => ['%{HTTPS} off'],
-            rewrite_rule => ['(.*) https://%{HTTP_HOST}%{REQUEST_URI}'],
+              comment      => 'Redirect to HTTPS',
+              rewrite_cond => ['%{HTTPS} off'],
+              rewrite_rule => ['(.*) https://%{HTTP_HOST}%{REQUEST_URI}'],
           }],
         }
       }
@@ -165,5 +158,4 @@ define phpmyadmin::vhost (
     ssl_key         => $ssl_apache_key,
     ssl_ca          => $ssl_apache_ca,
   }
-
 }
