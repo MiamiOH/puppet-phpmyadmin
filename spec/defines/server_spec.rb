@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'hiera'
 
 describe 'phpmyadmin::server', type: :define do
   on_supported_os.each do |os, facts|
@@ -27,6 +26,34 @@ describe 'phpmyadmin::server', type: :define do
 
       context 'compile' do
         it { is_expected.to compile }
+        it { is_expected.to contain_class('phpmyadmin::params') }
+
+        it { is_expected.to contain_concat('/foobar') }
+
+        it {
+          is_expected.to contain_concat__fragment('00_phpmyadmin_header').with(
+          'target' => '/foobar',
+          'order'  => '01',
+        )
+        }
+
+        it {
+          is_expected.to contain_concat__fragment('255_phpmyadmin_footer').with(
+          'target' => '/foobar',
+          'order'  => '255',
+        )
+        }
+
+        it {
+          is_expected.to contain_file('/foobar/blowfish_secret.inc.php').with(
+          'ensure'  => 'file',
+          'owner'   => 'root',
+          'group'   => 'foobar',
+          'mode'    => '0640',
+        )
+        }
+
+        it { is_expected.to contain_package('foobar') }
       end
     end
   end

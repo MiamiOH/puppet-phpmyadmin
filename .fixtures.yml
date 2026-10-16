@@ -1,14 +1,14 @@
 ---
 fixtures:
-  repositories:
+  forge_modules:
     stdlib:
-      repo: 'https://github.com/puppetlabs/puppetlabs-stdlib'
-      ref: '4.17.0'
+      repo: puppetlabs/stdlib
+      ref: 8.6.0
     apache:
-      repo: 'https://github.com/puppetlabs/puppetlabs-apache'
-      ref: '1.9.0'
+      repo: puppetlabs/apache
+      ref: 12.3.1
     concat:
-      repo: 'https://github.com/puppetlabs/puppetlabs-concat'
-      ref: '4.0.0'
+      repo: puppetlabs/concat
+      ref: 8.0.1
   symlinks:
     phpmyadmin: '#{source_dir}'

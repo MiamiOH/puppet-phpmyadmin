@@ -39,7 +39,7 @@ define phpmyadmin::servernode (
   String $server_group,
   String $myserver_name = $name,
   String $verbose_name  = $name,
-  String $hide_db       = '',
+  Optional[String] $hide_db = undef,
   Stdlib::Absolutepath $target        = $phpmyadmin::params::config_file,
 ) {
   include phpmyadmin::params

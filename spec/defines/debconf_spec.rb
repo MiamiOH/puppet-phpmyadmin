@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'hiera'
 
 describe 'phpmyadmin::debconf', type: :define do
   on_supported_os.each do |os, facts|
@@ -18,6 +17,15 @@ describe 'phpmyadmin::debconf', type: :define do
 
       context 'compile' do
         it { is_expected.to compile }
+        it { is_expected.to contain_class('phpmyadmin::params') }
+
+        it { is_expected.to contain_package('foobar') }
+
+        it {
+          is_expected.to contain_exec('barfoo').with(
+          'require' => 'Package[foobar]',
+        )
+        }
       end
     end
   end

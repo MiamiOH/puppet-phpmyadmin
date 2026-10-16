@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'hiera'
 
 describe 'phpmyadmin::vhost', type: :define do
   on_supported_os.each do |os, facts|

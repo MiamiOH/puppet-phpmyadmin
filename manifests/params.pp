@@ -1,15 +1,11 @@
-#Phpmyadmin installation parameters
-#Sets variables for both centos/redhat and ubuntu OS versions currently
-
 class phpmyadmin::params {
   include apache::params
 
-  #Class defaults
   $apache_name  = $apache::params::apache_name
   $apache_group = $apache::params::group
-  $disable_mod_security = hiera('phpmyadmin::disable_mod_security', false)
 
-  #Per OS variables
+  $disable_mod_security = lookup('phpmyadmin::disable_mod_security', Boolean, 'first', false)
+
   case $facts['os']['family'] {
     'RedHat': {
       $package_name          = 'phpMyAdmin'
@@ -19,7 +15,9 @@ class phpmyadmin::params {
       $doc_path              = '/usr/share/phpMyAdmin'
       $data_dir              = '/var/lib/phpMyAdmin'
       $preseed_package       = false
+      $debconf_package       = undef
     }
+
     'Debian': {
       $package_name          = 'phpmyadmin'
       $site_enable_dir       = $apache::params::vhost_enable_dir
@@ -30,8 +28,9 @@ class phpmyadmin::params {
       $preseed_package       = true
       $debconf_package       = 'debconf-utils'
     }
+
     default: {
-      fail("Class['phpmyadmin::params']: Unsupported OS: ${facts['os']['family']}")
+      fail("Unsupported OS family: ${facts['os']['family']}")
     }
   }
 }

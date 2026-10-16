@@ -10,10 +10,10 @@
 # [*debconf_package*]
 #   The package providing the debconf utilities.
 define phpmyadmin::debconf (
-  String $selection       = '',
-  String $value_type      = 'string',
-  String $value           = '',
-  String $debconf_package = $phpmyadmin::params::debconf_package,
+  Optional[String] $selection       = undef,
+  String $value_type                = 'string',
+  Optional[String] $value           = undef,
+  String $debconf_package           = $phpmyadmin::params::debconf_package,
 ) {
   include phpmyadmin::params
 

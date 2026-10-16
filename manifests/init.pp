@@ -41,44 +41,45 @@
 # Copyright 2013 Justice London, unless otherwise noted.
 #
 class phpmyadmin (
-  Boolean $enabled               = true,
-  Boolean $manage_apache         = true,
-  Boolean $manage_config         = true,
-  Array[String] $ip_access_ranges = ["${facts['networking']['ip']}/${facts['networking']['netmask']}"],
-  Boolean $use_alias             = true,
-  Boolean $preseed_package       = $phpmyadmin::params::preseed_package,
-  String $package_name           = $phpmyadmin::params::package_name,
-  String $apache_default_config = $phpmyadmin::params::apache_default_config,
-  String $apache_name           = $phpmyadmin::params::apache_name,
+  Boolean $enabled                = true,
+  Boolean $manage_apache          = true,
+  Boolean $manage_config          = true,
+  Array[String] $ip_access_ranges = [
+    "${facts['networking']['ip']}/${facts['networking']['netmask']}",
+  ],
+  Boolean $use_alias              = true,
+  Boolean $preseed_package        = $phpmyadmin::params::preseed_package,
+  String $package_name            = $phpmyadmin::params::package_name,
+  String $apache_default_config   = $phpmyadmin::params::apache_default_config,
+  String $apache_name             = $phpmyadmin::params::apache_name,
 ) inherits phpmyadmin::params {
-  #Hacky, but if we want to not break with an already included apache... override mpm
-  #If someone knows how to actually get out-of-scope variables to properly inherit
-  #let me know.
-  if $manage_apache == true and !defined(Class['apache']) {
+  if $manage_apache and !defined(Class['apache']) {
     class { 'apache':
       mpm_module => 'prefork',
     }
+
     include apache::mod::php
   }
 
-  if $manage_config == true {
-    $enabledt = str2bool($enabled)
-    #Define present/absent for enabled state (true/false)
-    $state_select = $enabledt ? {
-      true    => 'present',
-      default => 'absent',
+  $package_ensure = $enabled ? {
+    true    => 'present',
+    false   => 'absent',
+  }
+
+  if $manage_config and $enabled {
+    file { $apache_default_config:
+      ensure  => file,
+      content => template('phpmyadmin/phpMyAdmin.conf.erb'),
+      require => Package[$package_name],
+      notify  => Service[$apache_name],
+    }
+  } elsif $manage_config {
+    file { $apache_default_config:
+      ensure => absent,
     }
   }
 
-  #Default/basic apache config file for phpMyAdmin
-  file { $apache_default_config:
-    ensure  => file,
-    content => template('phpmyadmin/phpMyAdmin.conf.erb'),
-    require => Package[$package_name],
-    notify  => Service[$apache_name],
-  }
-
-  if $preseed_package {
+  if $preseed_package and $enabled {
     phpmyadmin::debconf { 'reconfigure-webserver':
       selection  => 'phpmyadmin/reconfigure-webserver',
       value_type => 'multiselect',
@@ -87,6 +88,8 @@ class phpmyadmin (
     }
   }
 
-  #Install or remove package based on enable status
-  ensure_packages([$package_name], { ensure => $state_select })
+  ensure_packages(
+    [$package_name],
+    { ensure => $package_ensure },
+  )
 }

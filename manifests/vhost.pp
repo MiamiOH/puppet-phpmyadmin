@@ -56,34 +56,39 @@
 #
 define phpmyadmin::vhost (
   Enum['present', 'absent'] $ensure = present,
-  Boolean $vhost_enabled = true,   #vhost_enabled parameter is validated but never actually used to enable or disable the vhost. Needs fixed
+  Boolean $vhost_enabled = true,
   String $priority = '20',
   Stdlib::Absolutepath $docroot = $phpmyadmin::params::doc_path,
-  Variant[String, Array[String]] $aliases = '',
+  Variant[String, Array[String]] $aliases = [],
   String $vhost_name = $name,
   Boolean $ssl = false,
   Boolean $ssl_redirect = false,
-  String $ssl_cert = '',
-  String $ssl_key = '',
+  Optional[String] $ssl_cert = undef,
+  Optional[String] $ssl_key = undef,
   Optional[String] $ssl_ca = undef,
-  String $ssl_cert_file = '',
-  String $ssl_key_file = '',
+  Optional[String] $ssl_cert_file = undef,
+  Optional[String] $ssl_key_file = undef,
   Optional[String] $ssl_ca_file = undef,
   Stdlib::Absolutepath $conf_dir = $apache::params::conf_dir,
   Stdlib::Absolutepath $conf_dir_enable = $phpmyadmin::params::site_enable_dir,
 ) {
   include phpmyadmin
 
+  $effective_ensure = $vhost_enabled ? {
+    true    => $ensure,
+    false   => 'absent',
+  }
+
   #If SSL is enabled, use 443 port by default
   case $ssl {
     true: {
       #Set vhost port
-      $port = '443'
+      $port = 443
 
-      if $ssl_cert_file == '' {
+      if $ssl_cert_file == undef or $ssl_cert_file == '' {
         #Define SSL key files if SSL is enabled
         file { "${conf_dir}/phpmyadmin_${vhost_name}.crt":
-          ensure => $ensure,
+          ensure => $effective_ensure,
           mode   => '0644',
           source => $ssl_cert,
         }
@@ -92,9 +97,9 @@ define phpmyadmin::vhost (
         $ssl_apache_cert = $ssl_cert_file
       }
 
-      if $ssl_key_file == '' {
+      if $ssl_key_file == undef or $ssl_key_file == '' {
         file { "${conf_dir}/phpmyadmin_${vhost_name}.key":
-          ensure => $ensure,
+          ensure => $effective_ensure,
           mode   => '0644',
           source => $ssl_key,
         }
@@ -105,7 +110,7 @@ define phpmyadmin::vhost (
 
       if $ssl_ca != undef {
         file { "${conf_dir}/phpmyadmin_${vhost_name}-ca.crt":
-          ensure => $ensure,
+          ensure => $effective_ensure,
           mode   => '0644',
           source => $ssl_ca,
         }
@@ -120,7 +125,7 @@ define phpmyadmin::vhost (
 
       if $ssl_redirect == true {
         apache::vhost { "${vhost_name}-http":
-          ensure        => $ensure,
+          ensure        => $effective_ensure,
           docroot       => $docroot,
           priority      => $priority,
           port          => 80,
@@ -136,7 +141,7 @@ define phpmyadmin::vhost (
     }
     default: {
       #Default vhost port
-      $port = '80'
+      $port = 80
 
       #No SSL cert/key define
       $ssl_apache_cert = undef
@@ -147,7 +152,7 @@ define phpmyadmin::vhost (
 
   #Creates a basic vhost entry for apache
   apache::vhost { $vhost_name:
-    ensure          => $ensure,
+    ensure          => $effective_ensure,
     docroot         => $docroot,
     priority        => $priority,
     port            => $port,

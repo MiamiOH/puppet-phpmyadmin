@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'hiera'
 
 describe 'phpmyadmin::servernode', type: :define do
   on_supported_os.each do |os, facts|
@@ -21,6 +20,16 @@ describe 'phpmyadmin::servernode', type: :define do
 
       context 'compile' do
         it { is_expected.to compile }
+        it { is_expected.to contain_class('phpmyadmin::params') }
+
+        it {
+          is_expected.to contain_concat__fragment(
+          'foobar_phpmyadmin_server_barfoo',
+        ).with(
+          'target' => '/foobar',
+          'order'  => '20-foobar-foobar.my.com',
+        )
+        }
       end
     end
   end
