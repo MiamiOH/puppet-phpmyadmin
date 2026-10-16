@@ -12,6 +12,8 @@
 #   The name which will appear in the list of servers (default: $name)
 # [*hide_db*]
 #   A regex describing the database names to hide (default: '')
+# [*target*]
+#   Absolute path to the phpMyAdmin configuration file receiving this server entry.
 #
 # === Examples
 #
@@ -34,18 +36,13 @@
 #
 
 define phpmyadmin::servernode (
-  $server_group,
-  $myserver_name = $name,
-  $verbose_name  = $name,
-  $hide_db       = '',
-  $target        = $::phpmyadmin::params::config_file,
+  String $server_group,
+  String $myserver_name = $name,
+  String $verbose_name  = $name,
+  Optional[String] $hide_db = undef,
+  Stdlib::Absolutepath $target        = $phpmyadmin::params::config_file,
 ) {
-  include ::phpmyadmin::params
-
-  #Variable validations
-  validate_string($server_group)
-  validate_string($myserver_name)
-  validate_absolute_path($target)
+  include phpmyadmin::params
 
   #Generate a server entry for the realized server ON the phpmyadmin server
   concat::fragment { "${server_group}_phpmyadmin_server_${name}":
@@ -53,5 +50,4 @@ define phpmyadmin::servernode (
     target  => $target,
     content => template('phpmyadmin/servernode.erb'),
   }
-
 }

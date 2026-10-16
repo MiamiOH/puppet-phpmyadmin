@@ -8,11 +8,21 @@
 # [*blowfish_key*]
 #   Defaults to a combination of the host and ipaddress fields for the server.
 #   You can, and probably should change this to something better.
-# [*ip_access_ranges*]
-#   True to what it sounds like, this sets the ip ranges which are allowed to access phpmyadmin.
-#   These IP ranges can be either a single range or an array.
 # [*properties_iconic*]
 #   Use icons instead of text for the table display of a database (TRUE|FALSE|'both')
+# [*absolute_uri*]
+#   Defines the URL under which phpMyAdmin is accessible from the users browser.
+#   Complete the variable below with the full URL in the style of <schema>://<server>[:<port>][/<path>] - like http://example.com:8080/phpMyAdmin/. Usually needed for a Reverse Proxy
+# [*resource_collect*]
+#   Whether to collect exported server-node resources for this server group.
+# [*config_file*]
+#   Absolute path to the generated phpMyAdmin configuration file.
+# [*data_dir*]
+#   Absolute path to the phpMyAdmin data directory.
+# [*apache_group*]
+#   Group that Apache uses to access phpMyAdmin files.
+# [*package_name*]
+#   Name of the phpMyAdmin package.
 #
 # === Examples
 #
@@ -30,24 +40,16 @@
 # Copyright 2013 Justice London, unless otherwise noted.
 #
 define phpmyadmin::server (
-  $blowfish_key      = md5("${::fqdn}${::ipaddress}"),
-  $resource_collect  = true,
-  $properties_iconic = 'FALSE',
-  $config_file       = $::phpmyadmin::params::config_file,
-  $data_dir          = $::phpmyadmin::params::data_dir,
-  $apache_group      = $::phpmyadmin::params::apache_group,
-  $package_name      = $::phpmyadmin::params::package_name,
+  String $blowfish_key      = md5("${facts['networking']['fqdn']}${facts['networking']['ip']}"),
+  Boolean $resource_collect = true,
+  String $properties_iconic = 'FALSE',
+  String $absolute_uri      = "http://${facts['networking']['fqdn']}/phpmyadmin/",
+  Stdlib::Absolutepath $config_file       = $phpmyadmin::params::config_file,
+  Stdlib::Absolutepath $data_dir          = $phpmyadmin::params::data_dir,
+  String $apache_group      = $phpmyadmin::params::apache_group,
+  String $package_name      = $phpmyadmin::params::package_name,
 ) {
-  include ::phpmyadmin::params
-
-  #Variable validations
-  validate_string($blowfish_key)
-  validate_bool($resource_collect)
-  validate_string($properties_iconic)
-  validate_absolute_path($config_file)
-  validate_absolute_path($data_dir)
-  validate_string($apache_group)
-  validate_string($package_name)
+  include phpmyadmin::params
 
   #Start by generating the config file using a template file
   concat { $config_file:
@@ -55,9 +57,9 @@ define phpmyadmin::server (
     group   => '0',
     mode    => '0644',
     require => Package[$package_name],
-  } ->
-  file { "${data_dir}/blowfish_secret.inc.php":
-    ensure  => 'present',
+  }
+  -> file { "${data_dir}/blowfish_secret.inc.php":
+    ensure  => 'file',
     owner   => 'root',
     group   => $apache_group,
     mode    => '0640',
@@ -73,7 +75,9 @@ define phpmyadmin::server (
 
   #Gather all server node resources
   if $resource_collect == true {
-    Phpmyadmin::Servernode <<| server_group == $name |>>
+    Phpmyadmin::Servernode <<| server_group == $name |>> {
+      target => $config_file,
+    }
   }
 
   #Footer for the phpmyadmin config
@@ -82,5 +86,4 @@ define phpmyadmin::server (
     order   => '255',
     content => template('phpmyadmin/config_footer.inc.php.erb'),
   }
-
 }

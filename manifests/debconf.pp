@@ -1,11 +1,21 @@
 #Simple class to validate and seed the correct package selection for debian based systems
+# === Parameters
+#
+# [*selection*]
+#   The debconf configuration key to set.
+# [*value_type*]
+#   The debconf value type, such as string or boolean.
+# [*value*]
+#   The value to assign to the debconf configuration key.
+# [*debconf_package*]
+#   The package providing the debconf utilities.
 define phpmyadmin::debconf (
-  $selection       = '',
-  $value_type      = 'string',
-  $value           = '',
-  $debconf_package = $::phpmyadmin::params::debconf_package,
+  Optional[String] $selection       = undef,
+  String $value_type                = 'string',
+  Optional[String] $value           = undef,
+  String $debconf_package           = $phpmyadmin::params::debconf_package,
 ) {
-  include ::phpmyadmin::params
+  include phpmyadmin::params
 
   #Install debconf package as needed
   ensure_packages([$debconf_package])
